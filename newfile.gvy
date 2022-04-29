@@ -5,7 +5,7 @@ pipeline {
 	         steps {
                 // step1 
                 echo 'compiling..'
-		            git url: 'https://github.com/teja1505/PetClinic'
+		            git url: 'https://github.com/teja1505/cicd-pipeline-train-schedule-autodeploy'
 		            sh script: '/opt/maven/bin/mvn compile'
            }
         }
