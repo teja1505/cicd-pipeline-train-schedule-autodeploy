@@ -27,11 +27,7 @@ pipeline {
                 echo 'unittest..'
 	               sh script: '/opt/maven/bin/mvn test'
             }
-	          post {
-               success {
-                   junit 'target/surefire-reports/*.xml'
-               }
-            }			
+	          			
         }
         stage('codecoverage') {
 
