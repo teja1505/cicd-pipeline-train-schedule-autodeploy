@@ -5,15 +5,15 @@ pipeline {
 	         steps {
                 // step1 
                 echo 'compiling..'
-		            git url: 'https://github.com/lerndevops/PetClinic'
-		            sh script: '/opt/apache-maven-3.8.5/bin/mvn compile'
+		            git url: 'https://github.com/teja1505/PetClinic'
+		            sh script: '/opt/maven/bin/mvn compile'
            }
         }
         stage('codereview-pmd') {
 	         steps {
                 // step2
                 echo 'codereview..'
-		            sh script: '/opt/apache-maven-3.8.5/bin/mvn -P metrics pmd:pmd'
+		            sh script: '/opt/maven/bin/mvn -P metrics pmd:pmd'
            }
 	         post {
                success {
@@ -25,7 +25,7 @@ pipeline {
 	          steps {
                 // step3
                 echo 'unittest..'
-	               sh script: '/opt/apache-maven-3.8.5/bin/mvn test'
+	               sh script: '/opt/maven/bin/mvn test'
             }
 	          post {
                success {
@@ -36,12 +36,12 @@ pipeline {
         stage('codecoverage') {
 
            tools {
-              jdk 'java1.8.0_312'
+              jdk 'java1.8'
            }
 	         steps {
                 // step4
                 echo 'codecoverage..'
-		            sh script: '/opt/apache-maven-3.8.5/bin/mvn cobertura:cobertura -Dcobertura.report.format=xml'
+		            sh script: '/opt/maven/bin/mvn cobertura:cobertura -Dcobertura.report.format=xml'
            }
 	         post {
                success {
@@ -53,8 +53,27 @@ pipeline {
 	         steps {
                 // step5
                 echo 'package......'
-		            sh script: '/opt/apache-maven-3.8.5/bin/mvn package'	
+		            sh script: '/opt/maven/bin/mvn package'	
            }		
         }
+        stage('build & push docker image') {
+	         steps {
+              withDockerRegistry(credentialsId: 'DOCKER_HUB_LOGIN', url: 'https://index.docker.io/v1/') {
+                    sh script: 'cd  $WORKSPACE'
+                    sh script: 'docker build --file Dockerfile --tag docker.io/teja150595/petclinic:$BUILD_NUMBER .'
+                    sh script: 'docker push docker.io/teja150595/petclinic:$BUILD_NUMBER'
+              }	
+           }		
+        }
+    stage('Deploy-App-QA') {
+  	   steps {
+              sh 'ansible-playbook --inventory /tmp/inv $WORKSPACE/deploy/deploy-kube.yml --extra-vars "env=qa build=$BUILD_NUMBER"'
+	   }
+	   post { 
+              always { 
+                cleanWs() 
+	      }
+	   }
+	}
     }
 }
